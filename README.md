@@ -42,4 +42,7 @@ echo "Bucket ${bucket_name} contents cleared."
 
 ```shell
 kubectl debug -it <pod_name> --image=busybox:1.28 -n <namespace> --target <container_name>
+
+# Then you can find the pod's mounted filesystem in /proc/1/root
+# In case of permission denied: https://stackoverflow.com/a/76772820/11122248
 ```
