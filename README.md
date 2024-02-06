@@ -37,3 +37,9 @@ done
 
 echo "Bucket ${bucket_name} contents cleared."
 ```
+
+### Debug pod without distro
+
+```shell
+kubectl debug -it <pod_name> --image=busybox:1.28 -n <namespace>
+```
