@@ -9,6 +9,26 @@ SVCRANGE=$(echo '{"apiVersion":"v1","kind":"Service","metadata":{"name":"tst"},"
 echo $SVCRANGE
 ```
 
+### Find size of S3 bucket
+
+```shell
+#!/bin/bash
+
+# Don't forget to make this executable "chmod +x s3_size.sh"
+
+# Replace these variables with your own values or set them as environment variables
+bucket_name="your-bucket-name"
+custom_endpoint="https://your-custom-endpoint-url"
+
+# Check if environment variables for AWS access key and secret key are set
+if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ]; then
+    echo "Error: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables must be set."
+    exit 1
+fi
+
+aws s3 ls --summarize --human-readable --recursive s3://${bucket_name} --endpoint-url "${custom_endpoint} | tail -2
+
+```
 ### Clear contents of S3 bucket
 
 ```shell
