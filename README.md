@@ -10,30 +10,40 @@ echo $SVCRANGE
 ```
 
 ### Export GitLab CI/CD project variables to local env
-```shell
-#!/bin/bash
+```python
+import os
+
+import requests
+
+try:
+    ACCESS_TOKEN = os.environ["GITLAB_TOKEN"]
+except KeyError as err:
+    raise ValueError(
+        "GITLAB_TOKEN environment variable is not set. "
+        " Please define it with your GitLab access token."
+    ) from err
 
 # GitLab API endpoint
-GITLAB_HOST="https://gitlab.company.com"
-PROJECT="1234"
-API_URL="${GITLAB_HOST}/api/v4/projects/${PROJECT}/variables?per_page=1000"
+GITLAB_HOST = "https://gitlab.company.com"
+PROJECT = "1234"
+API_URL = f"{GITLAB_HOST}/api/v4/projects/{PROJECT}/variables?per_page=1000"
 
-# Your GitLab access token
-ACCESS_TOKEN="glpat-some-token"
 
 # Curl command to retrieve CI/CD variables
-response=$(curl --silent --header "PRIVATE-TOKEN: $ACCESS_TOKEN" "$API_URL")
-
-keys=$(echo "$response" | jq -r '.[].key')
-values=$(echo "$response" | jq -r '.[].value')
+headers = {"PRIVATE-TOKEN": ACCESS_TOKEN}
+response = requests.get(API_URL, headers=headers, timeout=10)
+response.raise_for_status()
+data = response.json()
 
 # Loop through each key-value pair
-while IFS= read -r line; do
-    key=$(echo "$line" | jq -r '.key')
-    value=$(echo "$line" | jq -r '.value')
-    echo "Exporting $key"
-    export "$key"="$value"
-done <<< "$(echo "$response" | jq -c '.[]')"
+for item in data:
+    key = item["key"]
+    value = item["value"]
+    os.environ[key] = value
+
+
+print(f"Loaded {len(data)} environment variables from GitLab Project {PROJECT}")
+
 ```
 
 
