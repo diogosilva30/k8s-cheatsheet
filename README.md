@@ -29,7 +29,6 @@ PROJECT = "1234"
 API_URL = f"{GITLAB_HOST}/api/v4/projects/{PROJECT}/variables?per_page=1000"
 
 
-# Curl command to retrieve CI/CD variables
 headers = {"PRIVATE-TOKEN": ACCESS_TOKEN}
 response = requests.get(API_URL, headers=headers, timeout=10)
 response.raise_for_status()
