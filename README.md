@@ -9,6 +9,34 @@ SVCRANGE=$(echo '{"apiVersion":"v1","kind":"Service","metadata":{"name":"tst"},"
 echo $SVCRANGE
 ```
 
+### Export GitLab CI/CD project variables to local env
+```shell
+#!/bin/bash
+
+# GitLab API endpoint
+GITLAB_HOST="https://gitlab.company.com"
+PROJECT="1234"
+API_URL="${GITLAB_HOST}/api/v4/projects/${PROJECT}/variables?per_page=1000"
+
+# Your GitLab access token
+ACCESS_TOKEN="glpat-some-token"
+
+# Curl command to retrieve CI/CD variables
+response=$(curl --silent --header "PRIVATE-TOKEN: $ACCESS_TOKEN" "$API_URL")
+
+keys=$(echo "$response" | jq -r '.[].key')
+values=$(echo "$response" | jq -r '.[].value')
+
+# Loop through each key-value pair
+while IFS= read -r line; do
+    key=$(echo "$line" | jq -r '.key')
+    value=$(echo "$line" | jq -r '.value')
+    echo "Exporting $key"
+    export "$key"="$value"
+done <<< "$(echo "$response" | jq -c '.[]')"
+```
+
+
 ### Find size of S3 bucket
 
 ```shell
