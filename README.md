@@ -103,3 +103,72 @@ kubectl debug -it <pod_name> --image=busybox:1.28 -n <namespace> --target <conta
 # Then you can find the pod's mounted filesystem in /proc/1/root
 # In case of permission denied: https://stackoverflow.com/a/76772820/11122248
 ```
+
+## Cleanup DigitalOcean Unattached Volumes
+```python
+import requests
+import time
+
+# DigitalOcean API credentials
+API_TOKEN = "TOKEN_HERE"
+
+
+def get_block_storage_volumes():
+    volumes = []
+    page = 1
+    while True:
+        url = f"https://api.digitalocean.com/v2/volumes?page={page}&per_page=100"
+        headers = {
+            "Authorization": f"Bearer {API_TOKEN}",
+            "Content-Type": "application/json",
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            page_volumes = response.json()["volumes"]
+            if not page_volumes:
+                break
+            volumes.extend(page_volumes)
+            page += 1
+            time.sleep(1)  # To prevent rate limiting
+        else:
+            print(f"Failed to retrieve block storage volumes: {response.text}")
+            break
+    return volumes if volumes else None
+
+
+# Function to remove unattached block storage volumes
+def remove_unattached_volumes() -> None:
+    block_storage_volumes: list[dict] | None = get_block_storage_volumes()
+    if block_storage_volumes is None:
+        return
+
+    # Remove unattached volumes
+    for volume in block_storage_volumes:
+        if volume["droplet_ids"] is None or len(volume["droplet_ids"]) == 0:
+            print(
+                f"Removing unattached volume: {volume['id']} with name: {volume['name']} and size: {volume['size_gigabytes']} GB"
+            )
+            remove_volume(volume["id"])
+
+
+# Function to remove a volume by ID
+def remove_volume(volume_id):
+    url = f"https://api.digitalocean.com/v2/volumes/{volume_id}"
+    headers = {
+        "Authorization": f"Bearer {API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    response = requests.delete(url, headers=headers, timeout=10)
+    if response.status_code == 204:
+        print(f"Volume {volume_id} removed successfully.")
+    else:
+        print(f"Failed to remove volume {volume_id}: {response.text}")
+
+
+def main():
+    remove_unattached_volumes()
+
+
+if __name__ == "__main__":
+    main()
+```
